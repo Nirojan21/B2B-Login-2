@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model VolumeDiscount {
+  id            String        @id @default(uuid())
+  shop          String
+  title         String
+  description   String?
+  discountCode  String?       // Optional discount code
+  isActive      Boolean       @default(true)
+  discountType  String        // "percentage" or "fixed_amount"
+  discountValue Float         // percentage (0-100) or fixed amount
+  minQuantity   Int            // minimum quantity to apply discount
+  maxQuantity   Int?           // optional maximum quantity (null for unlimited)
+  productIds    String?        // JSON array of product IDs (null for all products)
+  collectionIds String?        // JSON array of collection IDs
+  customerTags  String?       // JSON array of customer tags (null for all customers)
+  startDate     DateTime?      // Optional start date
+  endDate       DateTime?      // Optional end date
+  usageLimit    Int?           // Optional usage limit (null for unlimited)
+  usageCount     Int            @default(0) // Current usage count
+  priority      Int            @default(0) // Higher priority discounts apply first
+  minOrderAmount Float?        // Minimum order amount required
+  maxDiscountAmount Float?     // Maximum discount amount (for percentage discounts)
+  tiers         DiscountTier[] // Discount tiers for multiple quantity breaks
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model DiscountTier {
+  id              String   @id @default(uuid())
+  discountId      String
+  discount        VolumeDiscount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  minQuantity     Int
+  maxQuantity     Int?
+  discountType    String   // "percentage" or "fixed_amount"
+  discountValue   Float
+  priority        Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([discountId])
+}
